@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pf.org.cms.hcg.system.mapper.UserMapper">
+  <resultMap id="BaseResultMap" type="com.pf.org.cms.hcg.system.bean.UserDO">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="user_name" jdbcType="VARCHAR" property="userName" />
+    <result column="login_name" jdbcType="VARCHAR" property="loginName" />
+    <result column="password" jdbcType="CHAR" property="password" />
+    <result column="salt" jdbcType="CHAR" property="salt" />
+    <result column="email" jdbcType="VARCHAR" property="email" />
+    <result column="mobile" jdbcType="CHAR" property="mobile" />
+    <result column="status" jdbcType="TINYINT" property="status" />
+    <result column="role_id" jdbcType="INTEGER" property="roleId" />
+    <result column="remark" jdbcType="VARCHAR" property="remark" />
+    <result column="is_deleted" jdbcType="TINYINT" property="deleted" />
+    <result column="gmt_create" jdbcType="TIMESTAMP" property="gmtCreate" />
+    <result column="gmt_modified" jdbcType="TIMESTAMP" property="gmtModified" />
+  </resultMap>
+
+  <sql id="Base_Column_List">
+    id, user_name, login_name, password, salt, email, mobile, status, role_id, remark,
+    is_deleted, gmt_create, gmt_modified
+  </sql>
+
+
+
+  <select id="selectUserByLoginName" parameterType="java.lang.String" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from sys_user
+    where login_name = #{loginName,jdbcType=VARCHAR} and is_deleted = 0
+  </select>
+
+
+</mapper>
