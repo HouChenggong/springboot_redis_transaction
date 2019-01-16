@@ -83,6 +83,7 @@ public class RedisTransaction {
         Map<String, Object> map = new HashMap<>();
         map.put("success", true);
         System.out.println(";;;" + map.toString());
+        redisTemplate.convertAndSend("topic1","这里是琬琬");
         return map;
     }
 
