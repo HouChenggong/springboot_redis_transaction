@@ -7,18 +7,19 @@ import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.DefaultTypedTuple;
 import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Api("用户管理的控制层")
 @Controller
@@ -83,8 +84,57 @@ public class RedisTransaction {
         Map<String, Object> map = new HashMap<>();
         map.put("success", true);
         System.out.println(";;;" + map.toString());
-        redisTemplate.convertAndSend("topic1","这里是琬琬");
+        redisTemplate.convertAndSend("topic1", "这里是琬琬");
         return map;
     }
 
+
+    @ApiOperation(value = "lua测试接口", notes = "lua测试接口")
+    @RequestMapping(value = "/lua", method = RequestMethod.GET)
+    @ResponseBody
+    public Map<String, Object> lua() {
+        DefaultRedisScript<String> re = new DefaultRedisScript<String>();
+        //设置脚本
+        re.setScriptText("return 'hello redis'");
+        //定义返回值类型，注意，如果没有这个定义，Spring不会返回结果
+        re.setResultType(String.class);
+        RedisSerializer<String> stringRedisSerializer = redisTemplate.getStringSerializer();
+        //执行LUA脚本
+        String result = (String) redisTemplate.execute(re, stringRedisSerializer, stringRedisSerializer, null);
+        Map<String, Object> map = new HashMap<>();
+        map.put("str", result);
+        return map;
+    }
+
+
+    @ApiOperation(value = "lua带参数的测试接口", notes = "lua带参数的测试接口")
+    @RequestMapping(value = "/luaCan", method = RequestMethod.GET)
+    @ResponseBody
+    public Map<String, Object> luaCanShu() {
+        String lua = "redis.call('set' ,KEYS[1],ARGV[1]  \n)" +
+                "redis.call('set', KEYS[2], ARGV[2]  \n) "+
+                " local str1 =redis.call('get', KEYS[1]  \n) "+
+                " local str2 =redis.call('get', KEYS[2]  \n) "+
+                "if str1 == str2 then \n"+
+                "return 1 \n"+
+                "end \n"+
+                "return 0 \n";
+
+        DefaultRedisScript<Long> re = new DefaultRedisScript<Long>();
+        //设置脚本
+        re.setScriptText(lua);
+        //定义返回值类型，注意，如果没有这个定义，Spring不会返回结果
+        re.setResultType(Long.class);
+        RedisSerializer<String> stringRedisSerializer = redisTemplate.getStringSerializer();
+
+        //定义KEY参数
+        List<String> keyList =new ArrayList<>();
+        keyList.add("22");
+        keyList.add("222");
+        //执行LUA脚本
+        Long result = (Long) redisTemplate.execute(re, stringRedisSerializer, stringRedisSerializer, keyList,"不知道干啥","也不知道啥用" );
+        Map<String, Object> map = new HashMap<>();
+        map.put("str", result);
+        return map;
+    }
 }
