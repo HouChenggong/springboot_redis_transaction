@@ -1,7 +1,7 @@
 logging:
     config: classpath:conf/logback-dev.xml
-    level:
-        root: debug
+#    level:
+#        root: debug
 
 spring:
     session:
