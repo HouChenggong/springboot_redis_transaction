@@ -37,14 +37,17 @@ public class RedisTransaction {
     @RequestMapping(value = "/multi", method = RequestMethod.GET)
     @ResponseBody
     public Map<String, Object> testmulti() {
-        redisManager.setStr("wanwan1", "wd小兔兔");
+        redisManager.setStr("wanwan", "wd小兔兔");
         List list = (List) redisTemplate.execute((RedisOperations res) ->
         {
-            //设置监控key
+            //设置监控key,在exec执行前如果这个key对应的值，发生了变化，事务执行
+            //通常监控的key可以是ID，也可以是一个对象
             res.watch("wanwan");
+            // 其实watch可以注释掉，或者设置成不监控
+             res.unwatch();
             //开启事务，在exec执行前
             res.multi();
-//            res.opsForValue().increment("wanwan",1);
+             res.opsForValue().increment("wanwan",1);
             res.opsForValue().set("wanwan2", "我的小兔兔1");
             Object value2 = res.opsForValue().get("wanwan2");
             System.out.println("命令在队列，所以取值为空" + value2 + "----");
@@ -54,7 +57,6 @@ public class RedisTransaction {
             return res.exec();
         });
         System.out.println(list);
-
         Map<String, Object> map = new HashMap<>();
         map.put("success", true);
         System.out.println(";;;" + map.toString());
