@@ -1,6 +1,7 @@
 package com.pf.org.cms.hcg.system.controller;
 
 
+import com.pf.org.cms.hcg.system.miaosha.GoodsService;
 import com.pf.org.cms.manage.RedisManager;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -29,6 +30,8 @@ public class RedisTransaction {
     RedisManager redisManager;
 
     @Autowired
+    GoodsService goodsService;
+    @Autowired
     private RedisTemplate redisTemplate;
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
@@ -40,14 +43,14 @@ public class RedisTransaction {
         redisManager.setStr("wanwan", "wd小兔兔");
         List list = (List) redisTemplate.execute((RedisOperations res) ->
         {
-            //设置监控key,在exec执行前如果这个key对应的值，发生了变化，事务执行
+            //设置监控key,在exec执行前如果这个key对应的值，发生了变化，事务bu执行
             //通常监控的key可以是ID，也可以是一个对象
             res.watch("wanwan");
             // 其实watch可以注释掉，或者设置成不监控
-             res.unwatch();
+            res.unwatch();
             //开启事务，在exec执行前
             res.multi();
-             res.opsForValue().increment("wanwan",1);
+            res.opsForValue().increment("wanwan", 1);
             res.opsForValue().set("wanwan2", "我的小兔兔1");
             Object value2 = res.opsForValue().get("wanwan2");
             System.out.println("命令在队列，所以取值为空" + value2 + "----");
@@ -114,12 +117,12 @@ public class RedisTransaction {
     @ResponseBody
     public Map<String, Object> luaCanShu() {
         String lua = "redis.call('set' ,KEYS[1],ARGV[1]  \n)" +
-                "redis.call('set', KEYS[2], ARGV[2]  \n) "+
-                " local str1 =redis.call('get', KEYS[1]  \n) "+
-                " local str2 =redis.call('get', KEYS[2]  \n) "+
-                "if str1 == str2 then \n"+
-                "return 1 \n"+
-                "end \n"+
+                "redis.call('set', KEYS[2], ARGV[2]  \n) " +
+                " local str1 =redis.call('get', KEYS[1]  \n) " +
+                " local str2 =redis.call('get', KEYS[2]  \n) " +
+                "if str1 == str2 then \n" +
+                "return 1 \n" +
+                "end \n" +
                 "return 0 \n";
 
         DefaultRedisScript<Long> re = new DefaultRedisScript<Long>();
@@ -130,13 +133,34 @@ public class RedisTransaction {
         RedisSerializer<String> stringRedisSerializer = redisTemplate.getStringSerializer();
 
         //定义KEY参数
-        List<String> keyList =new ArrayList<>();
+        List<String> keyList = new ArrayList<>();
         keyList.add("22");
         keyList.add("222");
         //执行LUA脚本
-        Long result = (Long) redisTemplate.execute(re, stringRedisSerializer, stringRedisSerializer, keyList,"不知道干啥","也不知道啥用" );
+        Long result = (Long) redisTemplate.execute(re, stringRedisSerializer, stringRedisSerializer, keyList, "不知道干啥", "也不知道啥用");
         Map<String, Object> map = new HashMap<>();
         map.put("str", result);
         return map;
+    }
+
+
+    @ApiOperation(value = "用事务秒杀测试接口", notes = "用事务秒杀测试接口")
+    @RequestMapping(value = "/miaoTransaction", method = RequestMethod.GET)
+    @ResponseBody
+    public Long miaoTransaction() {
+
+        Long res = goodsService.flashSellByRedisWatch("xiaomi", 1);
+        return res;
+    }
+
+
+    @ApiOperation(value = " 秒杀Lua测试接口", notes = "秒杀Lua测试接口")
+    @RequestMapping(value = "/miaoLua", method = RequestMethod.GET)
+    @ResponseBody
+    public Long miaoLua() {
+
+        Long res = goodsService.flashSellByRedisWatch("xiaomi", 1);
+        System.out.println(res.toString());
+        return res;
     }
 }
