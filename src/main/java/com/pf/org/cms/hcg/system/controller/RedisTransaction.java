@@ -2,6 +2,7 @@ package com.pf.org.cms.hcg.system.controller;
 
 
 import com.pf.org.cms.hcg.system.miaosha.GoodsService;
+import com.pf.org.cms.hcg.system.test.VolatileTest;
 import com.pf.org.cms.manage.RedisManager;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -29,6 +30,7 @@ public class RedisTransaction {
     @Autowired
     RedisManager redisManager;
 
+    private int value = 0;
     @Autowired
     GoodsService goodsService;
     @Autowired
@@ -163,4 +165,46 @@ public class RedisTransaction {
         System.out.println(res.toString());
         return res;
     }
+
+
+    @ApiOperation(value = "i++是否线程安全测试接口", notes = "是否线程安全测试接口")
+    @RequestMapping(value = "/i", method = RequestMethod.GET)
+    @ResponseBody
+    public synchronized int i() {
+        System.out.println("-----------之前：" + value);
+        value++;
+        System.out.println("============I++之后的值：" + value);
+        System.out.println();
+        System.out.println();
+
+        return value;
+    }
+
+    @ApiOperation(value = "把值放到redis或者MySQL里面，i++是否线程安全测试接口", notes = "是否线程安全测试接口")
+    @RequestMapping(value = "/redisZZ", method = RequestMethod.GET)
+    @ResponseBody
+    public synchronized int redisIvalue() {
+        int value1 = Integer.parseInt(redisManager.getStr("zizeng"));
+        System.out.println("-----------之前：" + value1);
+        value1++;
+        redisManager.setStr("zizeng", String.valueOf(value1));
+        System.out.println("============I++之后的值：" + value1);
+        System.out.println();
+        System.out.println();
+
+        return value1;
+    }
+
+
+
+    @ApiOperation(value = "volatileTest", notes = "volatileTest")
+    @RequestMapping(value = "/volatileTestClass", method = RequestMethod.GET)
+    @ResponseBody
+    public long volatileTestClass() {
+        VolatileTest v =new VolatileTest();
+        v.get();
+        v.getAndIncrement();
+        return 0L;
+    }
+
 }
